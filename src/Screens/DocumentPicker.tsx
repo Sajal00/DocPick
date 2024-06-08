@@ -1,12 +1,28 @@
-import {View, Text, Button, StyleSheet, Image, ScrollView} from 'react-native';
+import {
+  View,
+  Text,
+  Button,
+  StyleSheet,
+  Image,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
 import React, {useEffect, useState} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DocumentPicker, {
   DocumentPickerResponse,
   types,
 } from 'react-native-document-picker';
+import DeleteComp from '../Component/DeleteComp';
+import ModalComp from '../Component/ModalComp';
 
 const DocPicker: React.FC = () => {
+  const [selectedDocs, setSelectedDocs] = useState<DocumentPickerResponse[]>(
+    [],
+  );
+  //
+  //
+  //
   const StoreDatainAsyncStorage = async (doc: DocumentPickerResponse[]) => {
     try {
       const jsonValue = JSON.stringify(doc);
@@ -17,14 +33,10 @@ const DocPicker: React.FC = () => {
     }
   };
 
-  const [selectedDocs, setSelectedDocs] = useState<DocumentPickerResponse[]>(
-    [],
-  );
-
-  useEffect(() => {
-    console.log('selectedDocs', selectedDocs);
-    // handleDataShow();
-  }, [selectedDocs]);
+  // useEffect(() => {
+  //   console.log('selectedDocs', selectedDocs);
+  //   // handleDataShow();
+  // }, [selectedDocs]);
 
   const selectDoc = async () => {
     try {
@@ -49,32 +61,24 @@ const DocPicker: React.FC = () => {
     }
   };
 
-  const renderDataItem = (
-    item: {
-      type: string;
-      uri: any;
-      name:
-        | string
-        | number
-        | boolean
-        | React.ReactElement<any, string | React.JSXElementConstructor<any>>
-        | Iterable<React.ReactNode>
-        | null
-        | undefined;
-    },
-    index: React.Key | null | undefined,
-  ) => {
+  const renderDataItem = (item: DocumentPickerResponse, index: number) => {
     if (item.type && item.type.startsWith('image/')) {
       return (
-        <View key={index} style={styles.item}>
+        <TouchableOpacity
+          key={index}
+          style={styles.item}
+          // onPress={() => console.log('clicked in index', index)}>
+          onPress={handleModalcomp}>
           <Image source={{uri: item.uri}} style={styles.image} />
-        </View>
+          <DeleteComp onDeletePress={() => HandleDeleteItem(index)} />
+        </TouchableOpacity>
       );
     } else if (item.type && item.type === 'application/pdf') {
       return (
         <View key={index} style={styles.item}>
           <Text>📄</Text>
           <Text>{item.name}</Text>
+          {/* <DeleteComp onDeletePress={() => console.log('item to be deleted')} /> */}
         </View>
       );
     } else {
@@ -92,6 +96,16 @@ const DocPicker: React.FC = () => {
         )}
       </ScrollView>
     );
+  };
+
+  const HandleDeleteItem = (index: number) => {
+    const afterdeletedDocs = selectedDocs.filter((_, i) => i !== index);
+    setSelectedDocs(afterdeletedDocs);
+
+    console.log('Deleted document at index:', index);
+  };
+  const handleModalcomp = props => {
+    return <ModalComp />;
   };
 
   return (
