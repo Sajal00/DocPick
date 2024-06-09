@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {
   Modal,
   StyleSheet,
@@ -8,6 +8,7 @@ import {
   Image,
   TouchableOpacity,
 } from 'react-native';
+import MyPdfViewer from './MyPdfViewer';
 
 interface ModalCompProps {
   isVisible: boolean;
@@ -15,7 +16,34 @@ interface ModalCompProps {
   content?: string | null; // You can adjust the type as needed
 }
 
-const ModalComp: React.FC<ModalCompProps> = ({isVisible, onClose, content}) => {
+const ModalComp: React.FC<ModalCompProps> = ({
+  isVisible,
+  onClose,
+  content,
+  ...restProps
+}) => {
+  useEffect(() => {
+    console.log('content', content);
+  }, []);
+
+  const renderDataItem = (item?: any) => {
+    if (!item) {
+      return <Text>No content available</Text>;
+    }
+
+    if (item.type.startsWith('image/')) {
+      return <Image source={{uri: item.uri}} style={styles.image} />;
+    } else if (item.type === 'application/pdf') {
+      return <MyPdfViewer contentUri={item.uri} />;
+    } else {
+      return (
+        <View>
+          <Text>Unknown File Type</Text>
+        </View>
+      );
+    }
+  };
+
   return (
     <Modal
       animationType="slide"
@@ -25,11 +53,14 @@ const ModalComp: React.FC<ModalCompProps> = ({isVisible, onClose, content}) => {
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
           {content ? (
-            <Image source={{uri: content}} style={styles.image} />
+            renderDataItem(content)
           ) : (
             <Text>No content available</Text>
           )}
-          <TouchableOpacity style={styles.buttonClose} onPress={onClose}>
+          <TouchableOpacity
+            style={styles.buttonClose}
+            onPress={onClose}
+            {...restProps}>
             <Text style={styles.textStyle}>Close</Text>
           </TouchableOpacity>
         </View>

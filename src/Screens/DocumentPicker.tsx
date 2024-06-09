@@ -22,9 +22,7 @@ const DocPicker: React.FC = () => {
   );
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [currentImage, setCurrentImage] = useState<string | null>(null);
-  //
-  //
-  //
+
   const StoreDatainAsyncStorage = async (doc: DocumentPickerResponse[]) => {
     try {
       const jsonValue = JSON.stringify(doc);
@@ -35,11 +33,6 @@ const DocPicker: React.FC = () => {
     }
   };
 
-  // useEffect(() => {
-  //   console.log('selectedDocs', selectedDocs);
-  //   // handleDataShow();
-  // }, [selectedDocs]);
-
   const selectDoc = async () => {
     try {
       const doc: DocumentPickerResponse[] = await DocumentPicker.pick({
@@ -47,7 +40,7 @@ const DocPicker: React.FC = () => {
         allowMultiSelection: true,
       });
       const updateddoc = selectedDocs?.concat(doc);
-      console.log('Selected documents:', updateddoc);
+      // console.log('Selected documents:', updateddoc);
 
       setSelectedDocs(updateddoc);
       // await AsyncStorage.setItem('STORAGE_KEY', JSON.stringify(updateddoc));
@@ -77,11 +70,14 @@ const DocPicker: React.FC = () => {
       );
     } else if (item.type && item.type === 'application/pdf') {
       return (
-        <View key={index} style={styles.item}>
+        <TouchableOpacity
+          key={index}
+          style={styles.item}
+          onPress={() => handleModalcomp(item, index)}>
           <Text>📄</Text>
           <Text>{item.name}</Text>
-          {/* <DeleteComp onDeletePress={() => console.log('item to be deleted')} /> */}
-        </View>
+          <DeleteComp onDeletePress={() => HandleDeleteItem(index)} />
+        </TouchableOpacity>
       );
     } else {
       return null; // Skip rendering if the type is not recognized
@@ -106,17 +102,16 @@ const DocPicker: React.FC = () => {
 
     console.log('Deleted document at index:', index);
   };
-  const handleModalcomp = (item: {uri: string}, index: number) => {
-    setCurrentImage(item.uri);
+  const handleModalcomp = (item: any, index: number) => {
+    setCurrentImage(item);
     setIsModalVisible(true);
-    console.log('image open ', item.uri);
-    console.log('image open at index ', index);
+    // console.log('image open ', item.uri);
+    // console.log('image open at index ', index);
   };
 
   return (
     <>
       <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-        {/* <Text style={{alignSelf: 'center'}}>DocumentPicker</Text> */}
         <Button title="Select file" onPress={selectDoc} />
       </View>
       {selectedDocs.length > 0 && handleDataShow()}
@@ -124,7 +119,7 @@ const DocPicker: React.FC = () => {
         <ModalComp
           isVisible={isModalVisible}
           onClose={() => setIsModalVisible(false)}
-          content={currentImage} // Passing the current image URI to the modal
+          content={currentImage}
         />
       )}
     </>
