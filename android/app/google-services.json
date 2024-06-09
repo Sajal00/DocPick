@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "849897786358",
+    "project_id": "docpick-4c43e",
+    "storage_bucket": "docpick-4c43e.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:849897786358:android:cc9c2738adfc390b7315d7",
+        "android_client_info": {
+          "package_name": "com.docpick"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB75EHTMpA524iqhs9Se8pG7j6rGKTx1Uk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

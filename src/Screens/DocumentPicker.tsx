@@ -1,3 +1,4 @@
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -6,53 +7,127 @@ import {
   Image,
   ScrollView,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DocumentPicker, {
   DocumentPickerResponse,
   types,
 } from 'react-native-document-picker';
+import storage from '@react-native-firebase/storage';
+import RNFS from 'react-native-fs';
 import DeleteComp from '../Component/DeleteComp';
 import ModalComp from '../Component/ModalComp';
+// import ModalComp from '../Component/ModalComp';
+
+const STORAGE_KEY = 'STORAGE_KEY';
 
 const DocPicker: React.FC = () => {
   const [selectedDocs, setSelectedDocs] = useState<DocumentPickerResponse[]>(
     [],
   );
+  const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState<string>('');
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [currentImage, setCurrentImage] = useState<string | null>(null);
+  useEffect(() => {
+    const loadStoredDocs = async () => {
+      try {
+        const jsonValue = await AsyncStorage.getItem(STORAGE_KEY);
+        if (jsonValue != null) {
+          setSelectedDocs(JSON.parse(jsonValue));
+        }
+      } catch (e) {
+        console.error('Failed to load documents from storage', e);
+      }
+    };
 
-  const StoreDatainAsyncStorage = async (doc: DocumentPickerResponse[]) => {
+    loadStoredDocs();
+  }, []);
+
+  const storeDocsInAsyncStorage = async (docs: DocumentPickerResponse[]) => {
     try {
-      const jsonValue = JSON.stringify(doc);
-      await AsyncStorage.setItem('STORAGE_KEY', jsonValue);
-      console.log('stored in async ', jsonValue);
+      const jsonValue = JSON.stringify(docs);
+      await AsyncStorage.setItem(STORAGE_KEY, jsonValue);
+      console.log('Stored in AsyncStorage:', jsonValue);
     } catch (e) {
-      // saving error
+      console.error('Failed to store documents in storage', e);
     }
   };
 
   const selectDoc = async () => {
     try {
-      const doc: DocumentPickerResponse[] = await DocumentPicker.pick({
+      const docs: DocumentPickerResponse[] = await DocumentPicker.pick({
         type: [types.pdf, types.images, types.docx],
         allowMultiSelection: true,
       });
-      const updateddoc = selectedDocs?.concat(doc);
-      // console.log('Selected documents:', updateddoc);
-
-      setSelectedDocs(updateddoc);
-      // await AsyncStorage.setItem('STORAGE_KEY', JSON.stringify(updateddoc));
-      // StoreDatainAsyncStorage(updateddoc);
-
-      // You can use the `doc` object to perform further actions
+      const updatedDocs = selectedDocs.concat(docs);
+      setSelectedDocs(updatedDocs);
+      storeDocsInAsyncStorage(updatedDocs);
+      console.log('Selected documents:', updatedDocs);
     } catch (err) {
       if (DocumentPicker.isCancel(err)) {
         console.log('User cancelled the upload', err);
       } else {
-        console.log('Error picking document:', err);
+        console.error('Error picking document:', err);
       }
+    }
+  };
+
+  const copyFileToInternalStorage = async (uri: string, fileName: string) => {
+    try {
+      const destinationPath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+      await RNFS.copyFile(uri, destinationPath);
+
+      return destinationPath;
+    } catch (error) {
+      console.error('Error copying file:', error);
+      throw error;
+    }
+  };
+
+  const uploadFiles = async () => {
+    if (selectedDocs.length === 0) {
+      return Alert.alert('Please select at least one file');
+    }
+    setLoading(true);
+
+    const uploadPromises = selectedDocs.map(async doc => {
+      try {
+        // Copy file to internal storage
+        const internalPath = await copyFileToInternalStorage(doc.uri, doc.name);
+
+        const reference = storage().ref(`/myfiles/${doc.name}`);
+        const task = reference.putFile(internalPath);
+
+        task.on('state_changed', taskSnapshot => {
+          setProgress(
+            `${taskSnapshot.bytesTransferred} transferred out of ${taskSnapshot.totalBytes}`,
+          );
+          console.log(
+            `${taskSnapshot.bytesTransferred} transferred out of ${taskSnapshot.totalBytes}`,
+          );
+        });
+
+        await task;
+        return reference.getDownloadURL();
+      } catch (error) {
+        console.error('Error during file upload:', error);
+        throw error;
+      }
+    });
+
+    try {
+      await Promise.all(uploadPromises);
+      Alert.alert('Files uploaded successfully!');
+      setProgress('');
+      setSelectedDocs([]);
+      await AsyncStorage.removeItem(STORAGE_KEY);
+    } catch (error) {
+      console.error('Error uploading files:', error);
+      Alert.alert('Error uploading files', error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -62,10 +137,9 @@ const DocPicker: React.FC = () => {
         <TouchableOpacity
           key={index}
           style={styles.item}
-          // onPress={() => console.log('clicked in index', index)}>
           onPress={() => handleModalcomp(item, index)}>
           <Image source={{uri: item.uri}} style={styles.image} />
-          <DeleteComp onDeletePress={() => HandleDeleteItem(index)} />
+          <DeleteComp onDeletePress={() => handleDeleteItem(index)} />
         </TouchableOpacity>
       );
     } else if (item.type && item.type === 'application/pdf') {
@@ -76,11 +150,11 @@ const DocPicker: React.FC = () => {
           onPress={() => handleModalcomp(item, index)}>
           <Text>📄</Text>
           <Text>{item.name}</Text>
-          <DeleteComp onDeletePress={() => HandleDeleteItem(index)} />
+          <DeleteComp onDeletePress={() => handleDeleteItem(index)} />
         </TouchableOpacity>
       );
     } else {
-      return null; // Skip rendering if the type is not recognized
+      return null;
     }
   };
 
@@ -89,30 +163,28 @@ const DocPicker: React.FC = () => {
       <ScrollView
         style={{padding: 10, height: '80%', width: '100%', marginBottom: 10}}
         showsVerticalScrollIndicator={false}>
-        {selectedDocs.map((item: any, index: any) =>
-          renderDataItem(item, index),
-        )}
+        {selectedDocs.map((item, index) => renderDataItem(item, index))}
       </ScrollView>
     );
   };
 
-  const HandleDeleteItem = (index: number) => {
-    const afterdeletedDocs = selectedDocs.filter((_, i) => i !== index);
-    setSelectedDocs(afterdeletedDocs);
-
+  const handleDeleteItem = (index: number) => {
+    const updatedDocs = selectedDocs.filter((_, i) => i !== index);
+    setSelectedDocs(updatedDocs);
+    storeDocsInAsyncStorage(updatedDocs);
     console.log('Deleted document at index:', index);
   };
-  const handleModalcomp = (item: any, index: number) => {
+
+  const handleModalcomp = (item: DocumentPickerResponse, index: number) => {
     setCurrentImage(item);
     setIsModalVisible(true);
-    // console.log('image open ', item.uri);
-    // console.log('image open at index ', index);
   };
 
   return (
-    <>
-      <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-        <Button title="Select file" onPress={selectDoc} />
+    <View style={styles.container}>
+      <View style={styles.buttonContainer}>
+        <Button title="Select files" onPress={selectDoc} />
+        <Button title="Upload files" onPress={uploadFiles} disabled={loading} />
       </View>
       {selectedDocs.length > 0 && handleDataShow()}
       {isModalVisible && (
@@ -122,13 +194,22 @@ const DocPicker: React.FC = () => {
           content={currentImage}
         />
       )}
-    </>
+
+      {loading && <Text>Uploading... {progress}</Text>}
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     padding: 10,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    marginBottom: 10,
   },
   item: {
     flexDirection: 'row',
@@ -139,7 +220,6 @@ const styles = StyleSheet.create({
     width: '100%',
     marginBottom: 10,
     elevation: 2,
-    // backgroundColor: 'red',
   },
   image: {
     width: '95%',

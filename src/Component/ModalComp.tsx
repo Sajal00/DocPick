@@ -8,7 +8,6 @@ import {
   Image,
   TouchableOpacity,
 } from 'react-native';
-import MyPdfViewer from './MyPdfViewer';
 
 interface ModalCompProps {
   isVisible: boolean;
