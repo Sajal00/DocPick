@@ -1,35 +1,40 @@
-import React, {useState} from 'react';
-import {Alert, Modal, StyleSheet, Text, Pressable, View} from 'react-native';
+import React from 'react';
+import {
+  Modal,
+  StyleSheet,
+  Text,
+  View,
+  Button,
+  Image,
+  TouchableOpacity,
+} from 'react-native';
 
-const ModalComp = () => {
-  const [modalVisible, setModalVisible] = useState(false);
+interface ModalCompProps {
+  isVisible: boolean;
+  onClose: () => void;
+  content?: string | null; // You can adjust the type as needed
+}
+
+const ModalComp: React.FC<ModalCompProps> = ({isVisible, onClose, content}) => {
   return (
-    <View style={styles.centeredView}>
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => {
-          Alert.alert('Modal has been closed.');
-          setModalVisible(!modalVisible);
-        }}>
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            <Text style={styles.modalText}>Hello World!</Text>
-            <Pressable
-              style={[styles.button, styles.buttonClose]}
-              onPress={() => setModalVisible(!modalVisible)}>
-              <Text style={styles.textStyle}>Hide Modal</Text>
-            </Pressable>
-          </View>
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={isVisible}
+      onRequestClose={onClose}>
+      <View style={styles.centeredView}>
+        <View style={styles.modalView}>
+          {content ? (
+            <Image source={{uri: content}} style={styles.image} />
+          ) : (
+            <Text>No content available</Text>
+          )}
+          <TouchableOpacity style={styles.buttonClose} onPress={onClose}>
+            <Text style={styles.textStyle}>Close</Text>
+          </TouchableOpacity>
         </View>
-      </Modal>
-      <Pressable
-        style={[styles.button, styles.buttonOpen]}
-        onPress={() => setModalVisible(true)}>
-        <Text style={styles.textStyle}>Show Modal</Text>
-      </Pressable>
-    </View>
+      </View>
+    </Modal>
   );
 };
 
@@ -38,12 +43,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 22,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Dim the background
   },
   modalView: {
+    height: '85%',
+    width: '90%',
     margin: 20,
     backgroundColor: 'white',
-    borderRadius: 20,
+    borderRadius: 10,
     padding: 35,
     alignItems: 'center',
     shadowColor: '#000',
@@ -51,29 +58,26 @@ const styles = StyleSheet.create({
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.25,
+
     shadowRadius: 4,
     elevation: 5,
   },
-  button: {
+  buttonClose: {
+    backgroundColor: '#2196F3',
     borderRadius: 20,
     padding: 10,
     elevation: 2,
-  },
-  buttonOpen: {
-    backgroundColor: '#F194FF',
-  },
-  buttonClose: {
-    backgroundColor: '#2196F3',
+    marginTop: 15,
   },
   textStyle: {
     color: 'white',
     fontWeight: 'bold',
     textAlign: 'center',
   },
-  modalText: {
-    marginBottom: 15,
-    textAlign: 'center',
+  image: {
+    width: '100%',
+    height: '90%',
+    resizeMode: 'contain',
   },
 });
 

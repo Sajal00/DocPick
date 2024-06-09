@@ -20,6 +20,8 @@ const DocPicker: React.FC = () => {
   const [selectedDocs, setSelectedDocs] = useState<DocumentPickerResponse[]>(
     [],
   );
+  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+  const [currentImage, setCurrentImage] = useState<string | null>(null);
   //
   //
   //
@@ -68,7 +70,7 @@ const DocPicker: React.FC = () => {
           key={index}
           style={styles.item}
           // onPress={() => console.log('clicked in index', index)}>
-          onPress={handleModalcomp}>
+          onPress={() => handleModalcomp(item, index)}>
           <Image source={{uri: item.uri}} style={styles.image} />
           <DeleteComp onDeletePress={() => HandleDeleteItem(index)} />
         </TouchableOpacity>
@@ -104,8 +106,11 @@ const DocPicker: React.FC = () => {
 
     console.log('Deleted document at index:', index);
   };
-  const handleModalcomp = props => {
-    return <ModalComp />;
+  const handleModalcomp = (item: {uri: string}, index: number) => {
+    setCurrentImage(item.uri);
+    setIsModalVisible(true);
+    console.log('image open ', item.uri);
+    console.log('image open at index ', index);
   };
 
   return (
@@ -115,6 +120,13 @@ const DocPicker: React.FC = () => {
         <Button title="Select file" onPress={selectDoc} />
       </View>
       {selectedDocs.length > 0 && handleDataShow()}
+      {isModalVisible && (
+        <ModalComp
+          isVisible={isModalVisible}
+          onClose={() => setIsModalVisible(false)}
+          content={currentImage} // Passing the current image URI to the modal
+        />
+      )}
     </>
   );
 };
