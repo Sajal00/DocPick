@@ -9,6 +9,12 @@ import {
   TouchableOpacity,
   Alert,
 } from 'react-native';
+import {
+  HomeTabParamList,
+  DocumentPickerScreenNavigationProp,
+} from '../Types/type';
+import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DocumentPicker, {
   DocumentPickerResponse,
@@ -19,10 +25,10 @@ import RNFS from 'react-native-fs';
 import DeleteComp from '../Component/DeleteComp';
 import ModalComp from '../Component/ModalComp';
 // import ModalComp from '../Component/ModalComp';
-
+type Props = BottomTabScreenProps<HomeTabParamList, 'DocumentPicker'>;
 const STORAGE_KEY = 'STORAGE_KEY';
 
-const DocPicker: React.FC = () => {
+const DocPicker: React.FC<Props> = ({navigation}) => {
   const [selectedDocs, setSelectedDocs] = useState<DocumentPickerResponse[]>(
     [],
   );
@@ -30,6 +36,7 @@ const DocPicker: React.FC = () => {
   const [progress, setProgress] = useState<string>('');
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
   const [currentImage, setCurrentImage] = useState<string | null>(null);
+
   useEffect(() => {
     const loadStoredDocs = async () => {
       try {
@@ -58,7 +65,7 @@ const DocPicker: React.FC = () => {
   const selectDoc = async () => {
     try {
       const docs: DocumentPickerResponse[] = await DocumentPicker.pick({
-        type: [types.pdf, types.images, types.docx],
+        type: [types.pdf, types.images],
         allowMultiSelection: true,
       });
       const updatedDocs = selectedDocs.concat(docs);
@@ -91,6 +98,8 @@ const DocPicker: React.FC = () => {
       return Alert.alert('Please select at least one file');
     }
     setLoading(true);
+    const fileUploadResults: {fileName: string | null; downloadUrl: string}[] =
+      [];
 
     const uploadPromises = selectedDocs.map(async doc => {
       try {
@@ -110,7 +119,10 @@ const DocPicker: React.FC = () => {
         });
 
         await task;
-        return reference.getDownloadURL();
+        const downloadUrl = await reference.getDownloadURL();
+        fileUploadResults.push({fileName: doc.name, downloadUrl});
+        navigation.navigate('Documents', {files: fileUploadResults});
+        console.log('all download link', downloadUrl);
       } catch (error) {
         console.error('Error during file upload:', error);
         throw error;
@@ -120,9 +132,8 @@ const DocPicker: React.FC = () => {
     try {
       await Promise.all(uploadPromises);
       Alert.alert('Files uploaded successfully!');
+      console.log('Download URLs:', fileUploadResults);
       setProgress('');
-      setSelectedDocs([]);
-      await AsyncStorage.removeItem(STORAGE_KEY);
     } catch (error) {
       console.error('Error uploading files:', error);
       Alert.alert('Error uploading files', error.message);
@@ -134,24 +145,29 @@ const DocPicker: React.FC = () => {
   const renderDataItem = (item: DocumentPickerResponse, index: number) => {
     if (item.type && item.type.startsWith('image/')) {
       return (
-        <TouchableOpacity
+        <View
+          // onPress={() => handleModalcomp(item, index)}
           key={index}
-          style={styles.item}
-          onPress={() => handleModalcomp(item, index)}>
+          style={styles.item}>
           <Image source={{uri: item.uri}} style={styles.image} />
           <DeleteComp onDeletePress={() => handleDeleteItem(index)} />
-        </TouchableOpacity>
+        </View>
       );
     } else if (item.type && item.type === 'application/pdf') {
       return (
-        <TouchableOpacity
+        <View
+          // onPress={() => handleModalcomp(item, index)}
           key={index}
-          style={styles.item}
-          onPress={() => handleModalcomp(item, index)}>
-          <Text>📄</Text>
+          style={styles.pdfviw}>
+          <Image
+            style={styles.pdfimage}
+            source={{
+              uri: 'https://downloadr2.apkmirror.com/wp-content/uploads/2019/12/5de9caa9b39f0.png',
+            }}
+          />
           <Text>{item.name}</Text>
           <DeleteComp onDeletePress={() => handleDeleteItem(index)} />
-        </TouchableOpacity>
+        </View>
       );
     } else {
       return null;
@@ -175,10 +191,10 @@ const DocPicker: React.FC = () => {
     console.log('Deleted document at index:', index);
   };
 
-  const handleModalcomp = (item: DocumentPickerResponse, index: number) => {
-    setCurrentImage(item);
-    setIsModalVisible(true);
-  };
+  // const handleModalcomp = (item: DocumentPickerResponse, index: number) => {
+  //   setCurrentImage(item);
+  //   setIsModalVisible(true);
+  // };
 
   return (
     <View style={styles.container}>
@@ -221,10 +237,27 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     elevation: 2,
   },
+  pdfviw: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    alignSelf: 'center',
+    justifyContent: 'center',
+    height: 150,
+    width: '100%',
+    marginBottom: 10,
+    elevation: 2,
+  },
+
   image: {
     width: '95%',
     height: '95%',
     resizeMode: 'cover',
+  },
+  pdfimage: {
+    width: '60%',
+    height: '90%',
+    resizeMode: 'center',
+    borderColor: 'red',
   },
 });
 

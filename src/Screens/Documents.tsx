@@ -1,95 +1,72 @@
-import {View, Text, Button, StyleSheet, Image} from 'react-native';
-import React, {useEffect, useState} from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-// const STORAGE_KEY = 'STORED_DOCUMENTS';
-const Documents = () => {
-  const [storedData, setStoredData] = useState(null);
+// Documents.tsx
+import React from 'react';
+import {View, Text, FlatList, Image, StyleSheet} from 'react-native';
+// import {NativeStackScreenProps} from '@react-navigation/native-stack';
+import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
+import {HomeTabParamList, DocumentsScreenNavigationProp} from '../Types/type';
 
-  useEffect(() => {
-    getData();
-  }, []);
+type Props = BottomTabScreenProps<HomeTabParamList, 'Documents'>;
 
-  const getData = async () => {
-    try {
-      const jsonValue = await AsyncStorage.getItem('STORAGE_KEY');
-      const data = jsonValue != null ? JSON.parse(jsonValue) : null;
-      setStoredData(data);
-    } catch (e) {
-      console.error('Error reading value:', e);
-    }
-  };
+const Documents: React.FC<Props> = ({route}) => {
+  const {files} = route.params;
 
-  const handleAddData = () => {
-    const newData = [
-      ...storedData,
-      {type: 'image/png', uri: 'example.png', name: 'New Image'},
-      {type: 'application/pdf', uri: 'example.pdf', name: 'New Document'},
-    ];
-    setStoredData(newData);
-    storedData(newData);
-  };
-
-  const renderDataItem = (
-    item: {
-      type: string;
-      uri: any;
-      name:
-        | string
-        | number
-        | boolean
-        | React.ReactElement<any, string | React.JSXElementConstructor<any>>
-        | Iterable<React.ReactNode>
-        | null
-        | undefined;
-    },
-    index: React.Key | null | undefined,
-  ) => {
-    if (item.type && item.type.startsWith('image/')) {
-      return (
-        <View key={index} style={styles.item}>
-          <Image source={{uri: item.uri}} style={styles.image} />
-          <Text>{item.name}</Text>
-        </View>
-      );
-    } else if (item.type && item.type === 'application/pdf') {
-      return (
-        <View key={index} style={styles.item}>
-          {/* Render PDF icon or any other PDF representation */}
-          <Text>📄</Text>
-          <Text>{item.name}</Text>
-        </View>
-      );
-    } else {
-      return null; // Skip rendering if the type is not recognized
-    }
-  };
   return (
-    <View style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-      {storedData !== null ? (
-        <View style={styles.container}>
-          {storedData.map((item: any, index: any) =>
-            renderDataItem(item, index),
+    <View style={styles.container}>
+      <Text style={styles.header}>Uploaded Files:</Text>
+      {files ? (
+        <FlatList
+          data={files}
+          keyExtractor={item => item.fileName ?? ''}
+          renderItem={({item}) => (
+            <View style={styles.fileContainer}>
+              {item.fileName?.endsWith('.png') ||
+              item.fileName?.endsWith('.jpg') ||
+              item.fileName?.endsWith('.jpeg') ? (
+                <>
+                  <Image
+                    source={{uri: item.downloadUrl}}
+                    style={styles.image}
+                  />
+                  <Text>File:{item.filename}</Text>
+                </>
+              ) : (
+                <Text style={styles.fileName}>File: {item.fileName}</Text>
+              )}
+              <Text style={styles.url}>URL: {item.downloadUrl}</Text>
+            </View>
           )}
-        </View>
+        />
       ) : (
-        <Text>No data stored yet.</Text>
+        <Text>No files uploaded yet.</Text>
       )}
     </View>
   );
 };
+
 const styles = StyleSheet.create({
   container: {
-    padding: 10,
+    padding: 20,
   },
-  item: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 5,
+  header: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  fileContainer: {
+    marginVertical: 10,
   },
   image: {
-    width: 200,
-    height: 150,
-    marginRight: 10,
+    width: 100,
+    height: 100,
+    marginBottom: 5,
+  },
+  fileName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  url: {
+    fontSize: 14,
+    color: 'blue',
   },
 });
 

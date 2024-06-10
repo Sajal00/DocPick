@@ -8,6 +8,7 @@ type HomeTabParamList = {
   DocumentPicker: undefined;
   Documents: undefined;
 };
+type FilesType = {fileName: string; downloadUrl: string}[];
 
 const HomeScreen: React.FC = () => {
   return (
@@ -16,8 +17,12 @@ const HomeScreen: React.FC = () => {
         headerShown: false,
       }}
       initialRouteName="DocumentPicker">
-      {/* <Tab.Screen name="Documents" component={Documents} /> */}
       <Tab.Screen name="DocumentPicker" component={DocumentPicker} />
+      <Tab.Screen
+        name="Documents"
+        component={Documents}
+        initialParams={{files: [] as FilesType}}
+      />
     </Tab.Navigator>
   );
 };
