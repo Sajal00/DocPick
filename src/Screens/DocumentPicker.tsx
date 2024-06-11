@@ -5,6 +5,7 @@ import {
   Image,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator,
   Alert,
 } from 'react-native';
 import Dockpick from '../StyleComponent.tsx/StyleComponent';
@@ -204,7 +205,12 @@ const DocPicker: React.FC<Props> = ({navigation}) => {
       </View>
       {selectedDocs.length > 0 && handleDataShow()}
 
-      {loading && <Text>Uploading... {progress}</Text>}
+      {loading ? (
+        <View style={Dockpick.loaderContainer}>
+          <ActivityIndicator size="large" color="blue" />
+          <Text>Progress: {progress}</Text>
+        </View>
+      ) : null}
     </View>
   );
 };

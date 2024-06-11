@@ -1,5 +1,12 @@
 import React, {useEffect, useState} from 'react';
-import {View, Text, FlatList, Image, TouchableOpacity} from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  Image,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
 import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
 import {HomeTabParamList, DocumentsScreenNavigationProp} from '../Types/type';
 import ModalComp from '../Component/ModalComp';
@@ -11,10 +18,18 @@ const Documents: React.FC<Props> = ({route}) => {
   const {files} = route.params;
   const [selecteduploaditem, setSelectedUploadItem] = useState([]);
   const [isVisible, setVisible] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     console.log('selecteduploaditem:', selecteduploaditem);
   }, [selecteduploaditem]);
+
+  useEffect(() => {
+    // Assuming 'files' prop indicates the completion of the upload process.
+    if (files && files.length > 0) {
+      setLoading(false);
+    }
+  }, [files]);
 
   const handleModalComponent = item => {
     setSelectedUploadItem(item);
@@ -58,7 +73,12 @@ const Documents: React.FC<Props> = ({route}) => {
   return (
     <View style={Dockpick.container}>
       <Text style={Dockpick.header}>Preview Files:</Text>
-      {files ? (
+      {loading ? (
+        <View style={Dockpick.loaderContainer}>
+          <ActivityIndicator size="large" color="blue" />
+          <Text>Loading files...</Text>
+        </View>
+      ) : files && files.length > 0 ? (
         <FlatList
           data={files}
           keyExtractor={item => item.fileName ?? ''}
