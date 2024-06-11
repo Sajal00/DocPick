@@ -7,6 +7,7 @@ import {
   Image,
   TouchableOpacity,
 } from 'react-native';
+import PdfViewerComponent from './PdfViewerComponent';
 
 interface ModalCompProps {
   isVisible: boolean;
@@ -26,10 +27,13 @@ const ModalComp: React.FC<ModalCompProps> = ({isVisible, item, onClose}) => {
       item.fileName?.endsWith('.jpeg')
     ) {
       return <Image source={{uri: item.downloadUrl}} style={styles.image} />;
-    } else if (item.type === 'application/pdf') {
-      // Render your PDF viewer component here
-      // For example: return <MyPdfViewer contentUri={item.uri} />;
-      return <Text>PDF Viewer Placeholder</Text>;
+    } else if (
+      item.fileName?.endsWith('.pdf') ||
+      item.type === 'application/pdf'
+    ) {
+      return (
+        <PdfViewerComponent uri={item.downloadUrl} fileName={item.fileName} />
+      );
     } else {
       return <Text>Unknown File Type</Text>;
     }

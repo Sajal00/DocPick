@@ -168,8 +168,6 @@ const DocPicker: React.FC<Props> = ({navigation}) => {
           <DeleteComp onDeletePress={() => handleDeleteItem(index)} />
         </View>
       );
-    } else {
-      return null;
     }
   };
 

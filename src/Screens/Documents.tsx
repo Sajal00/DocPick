@@ -42,7 +42,9 @@ const Documents: React.FC<Props> = ({route}) => {
               <Text>File:{item.fileName}</Text>
             </TouchableOpacity>
           ) : (
-            <TouchableOpacity style={styles.pdfviw}>
+            <TouchableOpacity
+              style={styles.pdfviw}
+              onPress={() => handleModalComponent(item)}>
               <Image
                 source={{
                   uri: 'https://downloadr2.apkmirror.com/wp-content/uploads/2019/12/5de9caa9b39f0.png',
