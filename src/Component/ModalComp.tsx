@@ -4,15 +4,17 @@ import {
   StyleSheet,
   Text,
   View,
-  Button,
   Image,
   TouchableOpacity,
 } from 'react-native';
 
+// Assuming MyPdfViewer is defined or imported correctly
+// import MyPdfViewer from './MyPdfViewer'; // Adjust the path as needed
+
 interface ModalCompProps {
   isVisible: boolean;
   onClose: () => void;
-  content?: string | null; // You can adjust the type as needed
+  content?: {type: string; uri: string; name?: string} | null; // Adjust based on actual content type
 }
 
 const ModalComp: React.FC<ModalCompProps> = ({
@@ -23,14 +25,14 @@ const ModalComp: React.FC<ModalCompProps> = ({
 }) => {
   useEffect(() => {
     console.log('content', content);
-  }, []);
+  }, [content]);
 
-  const renderDataItem = (item?: any) => {
+  const renderDataItem = (item: ModalCompProps['content']) => {
     if (!item) {
       return <Text>No content available</Text>;
     }
 
-    if (item.type.startsWith('image/')) {
+    if (item.type?.startsWith('image/')) {
       return <Image source={{uri: item.uri}} style={styles.image} />;
     } else if (item.type === 'application/pdf') {
       return <MyPdfViewer contentUri={item.uri} />;
@@ -51,11 +53,7 @@ const ModalComp: React.FC<ModalCompProps> = ({
       onRequestClose={onClose}>
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
-          {content ? (
-            renderDataItem(content)
-          ) : (
-            <Text>No content available</Text>
-          )}
+          {renderDataItem(content)}
           <TouchableOpacity
             style={styles.buttonClose}
             onPress={onClose}
@@ -81,14 +79,14 @@ const styles = StyleSheet.create({
     margin: 20,
     backgroundColor: 'white',
     borderRadius: 10,
-    padding: 35,
+    padding: 20, // Adjust padding to fit better
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
     },
-
+    shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
   },
@@ -97,7 +95,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 10,
     elevation: 2,
-    marginTop: 15,
+    marginTop: 20, // Adjust margin for better spacing
   },
   textStyle: {
     color: 'white',
@@ -106,8 +104,9 @@ const styles = StyleSheet.create({
   },
   image: {
     width: '100%',
-    height: '90%',
+    height: '80%', // Reduced to give space for the button
     resizeMode: 'contain',
+    marginBottom: 10, // Spacing between image and button
   },
 });
 
