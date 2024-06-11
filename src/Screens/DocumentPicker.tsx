@@ -23,8 +23,7 @@ import DocumentPicker, {
 import storage from '@react-native-firebase/storage';
 import RNFS from 'react-native-fs';
 import DeleteComp from '../Component/DeleteComp';
-import ModalComp from '../Component/ModalComp';
-// import ModalComp from '../Component/ModalComp';
+
 type Props = BottomTabScreenProps<HomeTabParamList, 'DocumentPicker'>;
 const STORAGE_KEY = 'STORAGE_KEY';
 
@@ -34,8 +33,8 @@ const DocPicker: React.FC<Props> = ({navigation}) => {
   );
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState<string>('');
-  const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
-  const [currentImage, setCurrentImage] = useState<string | null>(null);
+  // const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+  // const [currentImage, setCurrentImage] = useState<string | null>(null);
 
   useEffect(() => {
     const loadStoredDocs = async () => {
@@ -203,13 +202,13 @@ const DocPicker: React.FC<Props> = ({navigation}) => {
         <Button title="Upload files" onPress={uploadFiles} disabled={loading} />
       </View>
       {selectedDocs.length > 0 && handleDataShow()}
-      {isModalVisible && (
+      {/* {isModalVisible && (
         <ModalComp
           isVisible={isModalVisible}
           onClose={() => setIsModalVisible(false)}
           content={currentImage}
         />
-      )}
+      )} */}
 
       {loading && <Text>Uploading... {progress}</Text>}
     </View>

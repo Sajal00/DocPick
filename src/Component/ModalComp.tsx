@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React from 'react';
 import {
   Modal,
   StyleSheet,
@@ -8,40 +8,30 @@ import {
   TouchableOpacity,
 } from 'react-native';
 
-// Assuming MyPdfViewer is defined or imported correctly
-// import MyPdfViewer from './MyPdfViewer'; // Adjust the path as needed
-
 interface ModalCompProps {
   isVisible: boolean;
+  item: any;
   onClose: () => void;
-  content?: {type: string; uri: string; name?: string} | null; // Adjust based on actual content type
 }
 
-const ModalComp: React.FC<ModalCompProps> = ({
-  isVisible,
-  onClose,
-  content,
-  ...restProps
-}) => {
-  useEffect(() => {
-    console.log('content', content);
-  }, [content]);
-
-  const renderDataItem = (item: ModalCompProps['content']) => {
+const ModalComp: React.FC<ModalCompProps> = ({isVisible, item, onClose}) => {
+  const renderDataItem = (item: any) => {
     if (!item) {
       return <Text>No content available</Text>;
     }
 
-    if (item.type?.startsWith('image/')) {
-      return <Image source={{uri: item.uri}} style={styles.image} />;
+    if (
+      item.fileName?.endsWith('.png') ||
+      item.fileName?.endsWith('.jpg') ||
+      item.fileName?.endsWith('.jpeg')
+    ) {
+      return <Image source={{uri: item.downloadUrl}} style={styles.image} />;
     } else if (item.type === 'application/pdf') {
-      return <MyPdfViewer contentUri={item.uri} />;
+      // Render your PDF viewer component here
+      // For example: return <MyPdfViewer contentUri={item.uri} />;
+      return <Text>PDF Viewer Placeholder</Text>;
     } else {
-      return (
-        <View>
-          <Text>Unknown File Type</Text>
-        </View>
-      );
+      return <Text>Unknown File Type</Text>;
     }
   };
 
@@ -53,11 +43,8 @@ const ModalComp: React.FC<ModalCompProps> = ({
       onRequestClose={onClose}>
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
-          {renderDataItem(content)}
-          <TouchableOpacity
-            style={styles.buttonClose}
-            onPress={onClose}
-            {...restProps}>
+          {renderDataItem(item)}
+          <TouchableOpacity style={styles.buttonClose} onPress={onClose}>
             <Text style={styles.textStyle}>Close</Text>
           </TouchableOpacity>
         </View>

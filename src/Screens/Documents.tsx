@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   Image,
   StyleSheet,
   TouchableOpacity,
+  GestureResponderEvent,
 } from 'react-native';
 import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
 import {HomeTabParamList, DocumentsScreenNavigationProp} from '../Types/type';
@@ -15,6 +16,17 @@ type Props = BottomTabScreenProps<HomeTabParamList, 'Documents'>;
 
 const Documents: React.FC<Props> = ({route}) => {
   const {files} = route.params;
+  const [selecteduploaditem, setSelectedUploadItem] = useState([]);
+  const [isVisible, setVisible] = useState<boolean>(false);
+
+  useEffect(() => {
+    console.log('selecteduploaditem:', selecteduploaditem);
+  }, [selecteduploaditem]);
+
+  const handleModalComponent = item => {
+    setSelectedUploadItem(item);
+    setVisible(true);
+  };
 
   const renderItemdata = ({item}) => {
     return (
@@ -23,7 +35,9 @@ const Documents: React.FC<Props> = ({route}) => {
           {item.fileName?.endsWith('.png') ||
           item.fileName?.endsWith('.jpg') ||
           item.fileName?.endsWith('.jpeg') ? (
-            <TouchableOpacity style={{height: 150, width: '100%'}}>
+            <TouchableOpacity
+              style={{height: 150, width: '100%'}}
+              onPress={() => handleModalComponent(item)}>
               <Image source={{uri: item.downloadUrl}} style={styles.image} />
               <Text>File:{item.fileName}</Text>
             </TouchableOpacity>
@@ -55,6 +69,11 @@ const Documents: React.FC<Props> = ({route}) => {
       ) : (
         <Text>No files uploaded yet.</Text>
       )}
+      <ModalComp
+        isVisible={isVisible}
+        item={selecteduploaditem}
+        onClose={() => setVisible(false)}
+      />
     </View>
   );
 };
