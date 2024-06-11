@@ -2,17 +2,16 @@ import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
-  Button,
-  StyleSheet,
   Image,
   ScrollView,
   TouchableOpacity,
   Alert,
 } from 'react-native';
-import {
-  HomeTabParamList,
-  DocumentPickerScreenNavigationProp,
-} from '../Types/type';
+import Dockpick from '../StyleComponent.tsx/StyleComponent';
+import {HomeTabParamList} from '../Types/type';
+import MaterialIconsIcon from 'react-native-vector-icons/MaterialIcons';
+import FontAwesomeIcon from 'react-native-vector-icons/MaterialIcons';
+
 import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -33,8 +32,6 @@ const DocPicker: React.FC<Props> = ({navigation}) => {
   );
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState<string>('');
-  // const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
-  // const [currentImage, setCurrentImage] = useState<string | null>(null);
 
   useEffect(() => {
     const loadStoredDocs = async () => {
@@ -47,19 +44,12 @@ const DocPicker: React.FC<Props> = ({navigation}) => {
         console.error('Failed to load documents from storage', e);
       }
     };
-
     loadStoredDocs();
   }, []);
 
-  const storeDocsInAsyncStorage = async (docs: DocumentPickerResponse[]) => {
-    try {
-      const jsonValue = JSON.stringify(docs);
-      await AsyncStorage.setItem(STORAGE_KEY, jsonValue);
-      console.log('Stored in AsyncStorage:', jsonValue);
-    } catch (e) {
-      console.error('Failed to store documents in storage', e);
-    }
-  };
+  useEffect(() => {
+    Alert.alert('Please Select Files');
+  }, []);
 
   const selectDoc = async () => {
     try {
@@ -77,6 +67,16 @@ const DocPicker: React.FC<Props> = ({navigation}) => {
       } else {
         console.error('Error picking document:', err);
       }
+    }
+  };
+
+  const storeDocsInAsyncStorage = async (docs: DocumentPickerResponse[]) => {
+    try {
+      const jsonValue = JSON.stringify(docs);
+      await AsyncStorage.setItem(STORAGE_KEY, jsonValue);
+      console.log('Stored in AsyncStorage:', jsonValue);
+    } catch (e) {
+      console.error('Failed to store documents in storage', e);
     }
   };
 
@@ -109,12 +109,15 @@ const DocPicker: React.FC<Props> = ({navigation}) => {
         const task = reference.putFile(internalPath);
 
         task.on('state_changed', taskSnapshot => {
-          setProgress(
-            `${taskSnapshot.bytesTransferred} transferred out of ${taskSnapshot.totalBytes}`,
-          );
-          console.log(
-            `${taskSnapshot.bytesTransferred} transferred out of ${taskSnapshot.totalBytes}`,
-          );
+          const bytesTransferred = taskSnapshot.bytesTransferred;
+          const totalBytes = taskSnapshot.totalBytes;
+          const percentage = (bytesTransferred / totalBytes) * 100;
+
+          // Rounding to two decimal places
+          const percentageRounded = percentage.toFixed(2);
+
+          setProgress(`${percentageRounded}% completed`);
+          console.log(`${percentageRounded}% completed`);
         });
 
         await task;
@@ -133,6 +136,8 @@ const DocPicker: React.FC<Props> = ({navigation}) => {
       Alert.alert('Files uploaded successfully!');
       console.log('Download URLs:', fileUploadResults);
       setProgress('');
+      setSelectedDocs([]);
+      await AsyncStorage.removeItem(STORAGE_KEY);
     } catch (error) {
       console.error('Error uploading files:', error);
       Alert.alert('Error uploading files', error.message);
@@ -144,22 +149,17 @@ const DocPicker: React.FC<Props> = ({navigation}) => {
   const renderDataItem = (item: DocumentPickerResponse, index: number) => {
     if (item.type && item.type.startsWith('image/')) {
       return (
-        <View
-          // onPress={() => handleModalcomp(item, index)}
-          key={index}
-          style={styles.item}>
-          <Image source={{uri: item.uri}} style={styles.image} />
+        <View key={index} style={Dockpick.item}>
+          <Image source={{uri: item.uri}} style={Dockpick.image} />
+
           <DeleteComp onDeletePress={() => handleDeleteItem(index)} />
         </View>
       );
     } else if (item.type && item.type === 'application/pdf') {
       return (
-        <View
-          // onPress={() => handleModalcomp(item, index)}
-          key={index}
-          style={styles.pdfviw}>
+        <View key={index} style={Dockpick.pdfImageviw}>
           <Image
-            style={styles.pdfimage}
+            style={Dockpick.pdfimage}
             source={{
               uri: 'https://downloadr2.apkmirror.com/wp-content/uploads/2019/12/5de9caa9b39f0.png',
             }}
@@ -174,7 +174,7 @@ const DocPicker: React.FC<Props> = ({navigation}) => {
   const handleDataShow = () => {
     return (
       <ScrollView
-        style={{padding: 10, height: '80%', width: '100%', marginBottom: 10}}
+        style={Dockpick.Scrollviewstye}
         showsVerticalScrollIndicator={false}>
         {selectedDocs.map((item, index) => renderDataItem(item, index))}
       </ScrollView>
@@ -188,74 +188,25 @@ const DocPicker: React.FC<Props> = ({navigation}) => {
     console.log('Deleted document at index:', index);
   };
 
-  // const handleModalcomp = (item: DocumentPickerResponse, index: number) => {
-  //   setCurrentImage(item);
-  //   setIsModalVisible(true);
-  // };
-
   return (
-    <View style={styles.container}>
-      <View style={styles.buttonContainer}>
-        <Button title="Select files" onPress={selectDoc} />
-        <Button title="Upload files" onPress={uploadFiles} disabled={loading} />
+    <View style={Dockpick.Maincontainer}>
+      <View style={Dockpick.buttonContainer}>
+        <TouchableOpacity onPress={selectDoc}>
+          <MaterialIconsIcon
+            name="add-photo-alternate"
+            size={40}
+            color="orange"
+          />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={uploadFiles} disabled={loading}>
+          <FontAwesomeIcon name="cloud-upload" size={40} color="skyblue" />
+        </TouchableOpacity>
       </View>
       {selectedDocs.length > 0 && handleDataShow()}
-      {/* {isModalVisible && (
-        <ModalComp
-          isVisible={isModalVisible}
-          onClose={() => setIsModalVisible(false)}
-          content={currentImage}
-        />
-      )} */}
 
       {loading && <Text>Uploading... {progress}</Text>}
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 10,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  item: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'center',
-    justifyContent: 'center',
-    height: 150,
-    width: '100%',
-    marginBottom: 10,
-    elevation: 2,
-  },
-  pdfviw: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    alignSelf: 'center',
-    justifyContent: 'center',
-    height: 150,
-    width: '100%',
-    marginBottom: 10,
-    elevation: 2,
-  },
-
-  image: {
-    width: '95%',
-    height: '95%',
-    resizeMode: 'cover',
-  },
-  pdfimage: {
-    width: '60%',
-    height: '90%',
-    resizeMode: 'center',
-    borderColor: 'red',
-  },
-});
 
 export default DocPicker;
